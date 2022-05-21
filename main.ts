@@ -17,6 +17,10 @@ function urlType({ label, name, value }: ITypeInfo): URL {
   }
 }
 
+interface Options {
+  limit?: number;
+}
+
 async function main() {
   await setup({
     handlers: {
@@ -34,15 +38,22 @@ async function main() {
     )
     .type("url", urlType)
     .arguments("<wiki_url:url>")
+    .option("-l, --limit <limit:number>", "Number of changes to fetch")
     .allowEmpty(false)
-    .action(async (options, wikiUrl) => {
+    .action(async (options: Options, wikiUrl) => {
       const rcOptions = {
         window: 10,
         namespace: 0,
       };
 
+      let count = 0;
       for await (const rc of getRecentChanges(wikiUrl, rcOptions)) {
+        count++;
         console.log(rc);
+
+        if (options.limit != null && count >= options.limit) {
+          break;
+        }
       }
     })
     .parse(Deno.args);
