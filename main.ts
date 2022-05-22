@@ -11,7 +11,7 @@ import {
   getRevisionUrl,
   getSiteInfo,
   RECENT_CHANGE_TYPES,
-} from "./wiki.ts";
+} from "./mediawiki.ts";
 
 function urlType({ label, name, value }: ITypeInfo): URL {
   try {
@@ -36,7 +36,7 @@ async function main() {
       console: new handlers.ConsoleHandler("DEBUG"),
     },
     loggers: {
-      wiki: { level: "INFO", handlers: ["console"] },
+      mediawiki: { level: "INFO", handlers: ["console"] },
     },
   });
 
