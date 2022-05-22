@@ -11,6 +11,7 @@ import {
   getRevisionUrl,
   getSiteInfo,
   RECENT_CHANGE_TYPES,
+  RecentChangeType,
 } from "./mediawiki.ts";
 
 function urlType({ label, name, value }: ITypeInfo): URL {
@@ -27,19 +28,12 @@ function urlType({ label, name, value }: ITypeInfo): URL {
 const changeType = new EnumType(RECENT_CHANGE_TYPES);
 
 interface Options {
+  changeType?: RecentChangeType;
   limit?: number;
+  debug: boolean;
 }
 
 async function main() {
-  await setup({
-    handlers: {
-      console: new handlers.ConsoleHandler("DEBUG"),
-    },
-    loggers: {
-      mediawiki: { level: "INFO", handlers: ["console"] },
-    },
-  });
-
   await new Command()
     .name(import.meta.url.match(/\/([^/]+)$/)?.[1]!)
     .description(
@@ -53,9 +47,22 @@ async function main() {
       "Filter by change type",
     )
     .option("-l, --limit <limit:number>", "Number of changes to fetch")
+    .option("-d, --debug", "Enable debug logging", { default: false })
     .allowEmpty(false)
     .action(async (options: Options, wikiUrl) => {
-      let siteInfo;
+      await setup({
+        handlers: {
+          console: new handlers.ConsoleHandler("DEBUG"),
+        },
+        loggers: {
+          mediawiki: {
+            level: options.debug ? "DEBUG" : "INFO",
+            handlers: ["console"],
+          },
+        },
+      });
+
+      let siteInfo: SiteInfo;
       try {
         siteInfo = await getSiteInfo(wikiUrl);
       } catch (e) {
