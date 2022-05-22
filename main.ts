@@ -1,10 +1,16 @@
 import { handlers, setup } from "https://deno.land/std@0.140.0/log/mod.ts";
 import {
   Command,
+  EnumType,
   ITypeInfo,
   ValidationError,
 } from "https://deno.land/x/cliffy@v0.24.2/command/mod.ts";
-import { getArticleUrl, getRecentChanges, getSiteInfo } from "./wiki.ts";
+import {
+  getArticleUrl,
+  getRecentChanges,
+  getSiteInfo,
+  RECENT_CHANGE_TYPES,
+} from "./wiki.ts";
 
 function urlType({ label, name, value }: ITypeInfo): URL {
   try {
@@ -16,6 +22,8 @@ function urlType({ label, name, value }: ITypeInfo): URL {
     );
   }
 }
+
+const changeType = new EnumType(RECENT_CHANGE_TYPES);
 
 interface Options {
   limit?: number;
@@ -37,7 +45,12 @@ async function main() {
       "Relay RecentChanges from a MediaWiki site to a Mastodon account",
     )
     .type("url", urlType)
+    .type("changeType", changeType)
     .arguments("<wiki_url:url>")
+    .option(
+      "-t, --change-type <change_type:changeType>",
+      "Filter by change type",
+    )
     .option("-l, --limit <limit:number>", "Number of changes to fetch")
     .allowEmpty(false)
     .action(async (options: Options, wikiUrl) => {
