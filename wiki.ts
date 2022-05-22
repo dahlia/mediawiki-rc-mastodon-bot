@@ -60,6 +60,10 @@ export function getArticleUrl(siteInfo: SiteInfo, title: string): URL {
   return new URL(siteInfo.articlepath.replace("$1", title), siteInfo.base);
 }
 
+export function getRevisionUrl(siteInfo: SiteInfo, revid: number): URL {
+  return new URL(`${siteInfo.script}?oldid=${revid}`, siteInfo.base);
+}
+
 export interface RecentChangesOptions {
   readonly window?: number;
   readonly namespace?: number;
@@ -80,18 +84,56 @@ export const RECENT_CHANGE_TYPES = [
 export type ElementTypeOfArray<T extends readonly unknown[]> = T extends
   readonly (infer U)[] ? U : never;
 
-export interface RecentChange {
+export interface RCBase {
   type: ElementTypeOfArray<typeof RECENT_CHANGE_TYPES>;
-  pageid: number;
-  revid: number;
-  old_revid: number;
   rcid: number;
   ns: number;
   title: string;
-  oldlen: number;
-  newlen: number;
+  pageid: number;
   redirect?: "";
 }
+
+export interface RcLog extends RCBase {
+  type: "log";
+}
+
+export interface RCNewBase extends RCBase {
+  revid: number;
+  newlen: number;
+}
+
+export interface RCNew extends RCNewBase {
+  type: "new";
+}
+
+export interface RCEditBase extends RCNewBase {
+  old_revid: number;
+  oldlen: number;
+}
+
+export interface RCEdit extends RCEditBase {
+  type: "edit";
+}
+
+export interface RCMove extends RCEditBase {
+  type: "move";
+}
+
+export interface RCDelete extends RCEditBase {
+  type: "delete";
+}
+
+export interface RCUpload extends RCNewBase {
+  type: "upload";
+}
+
+export type RecentChange =
+  | RcLog
+  | RCNew
+  | RCEdit
+  | RCMove
+  | RCDelete
+  | RCUpload;
 
 export async function* getRecentChanges(
   wikiUrl: URL,

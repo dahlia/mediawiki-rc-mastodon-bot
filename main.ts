@@ -8,6 +8,7 @@ import {
 import {
   getArticleUrl,
   getRecentChanges,
+  getRevisionUrl,
   getSiteInfo,
   RECENT_CHANGE_TYPES,
 } from "./wiki.ts";
@@ -70,7 +71,11 @@ async function main() {
       let count = 0;
       for await (const rc of getRecentChanges(wikiUrl, rcOptions)) {
         count++;
-        console.log(rc.title, getArticleUrl(siteInfo, rc.title).href);
+        const articleUrl = getArticleUrl(siteInfo, rc.title);
+        const url = rc.type == "log"
+          ? articleUrl
+          : getRevisionUrl(siteInfo, rc.revid);
+        console.log(rc.title, url.href);
 
         if (options.limit != null && count >= options.limit) {
           break;
