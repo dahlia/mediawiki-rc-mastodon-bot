@@ -4,7 +4,7 @@ import {
   ITypeInfo,
   ValidationError,
 } from "https://deno.land/x/cliffy@v0.24.2/command/mod.ts";
-import { getRecentChanges } from "./wiki.ts";
+import { getArticleUrl, getRecentChanges, getSiteInfo } from "./wiki.ts";
 
 function urlType({ label, name, value }: ITypeInfo): URL {
   try {
@@ -41,6 +41,14 @@ async function main() {
     .option("-l, --limit <limit:number>", "Number of changes to fetch")
     .allowEmpty(false)
     .action(async (options: Options, wikiUrl) => {
+      let siteInfo;
+      try {
+        siteInfo = await getSiteInfo(wikiUrl);
+      } catch (e) {
+        console.error("error:", e);
+        Deno.exit(1);
+      }
+
       const rcOptions = {
         window: 10,
         namespace: 0,
@@ -49,7 +57,7 @@ async function main() {
       let count = 0;
       for await (const rc of getRecentChanges(wikiUrl, rcOptions)) {
         count++;
-        console.log(rc);
+        console.log(rc.title, getArticleUrl(siteInfo, rc.title).href);
 
         if (options.limit != null && count >= options.limit) {
           break;

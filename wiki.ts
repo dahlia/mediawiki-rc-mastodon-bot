@@ -5,12 +5,67 @@ function getLogger() {
   return log.getLogger("wiki");
 }
 
+interface SiteInfo {
+  readonly mainpage: string;
+  readonly base: string;
+  readonly sitename: string;
+  readonly logo: string;
+  readonly generator: string;
+  readonly langconversion: string | null;
+  readonly titleconversion: string | null;
+  readonly linkprefixcharset: string;
+  readonly linktrail: string;
+  readonly legaltitlechars: string;
+  readonly invalidusernamechars: string;
+  readonly case: "first-letter" | "case-sensitive";
+  readonly lang: string;
+  readonly writeapi: "" | null;
+  readonly timezone: string;
+  readonly timeoffset: number;
+  readonly articlepath: string;
+  readonly scriptpath: string;
+  readonly script: string;
+  readonly variantarticlepath: boolean;
+  readonly server: string;
+  readonly servername: string;
+  readonly wikiid: string;
+  readonly time: string;
+  readonly favicon: string;
+}
+
+export async function getSiteInfo(wikiUrl: URL): Promise<SiteInfo> {
+  const logger = getLogger();
+  const params = {
+    format: "json",
+    action: "query",
+    meta: "siteinfo",
+    siprop: "general",
+  };
+  const apiUrl = new URL("./api.php", wikiUrl);
+  logger.debug(params);
+  apiUrl.search = new URLSearchParams(params).toString();
+  logger.debug(apiUrl);
+  const response = await fetch(apiUrl.toString());
+  logger.debug(response);
+  if (response.status === 404) {
+    throw new Error(`${wikiUrl} does not seem to be a MediaWiki site.`);
+  }
+
+  const json = await response.json();
+  logger.debug(json);
+  return json.query.general;
+}
+
+export function getArticleUrl(siteInfo: SiteInfo, title: string): URL {
+  return new URL(siteInfo.articlepath.replace("$1", title), siteInfo.base);
+}
+
 export interface RecentChangesOptions {
-  window?: number;
-  namespace?: number;
-  before?: Date;
-  after?: Date;
-  intervalSeconds?: number;
+  readonly window?: number;
+  readonly namespace?: number;
+  readonly before?: Date;
+  readonly after?: Date;
+  readonly intervalSeconds?: number;
 }
 
 export const RECENT_CHANGE_TYPES = [
@@ -69,7 +124,7 @@ export async function* getRecentChanges(
     const response = await fetch(apiUrl.toString());
     logger.debug(response);
     if (response.status === 404) {
-      throw new Error(`Seems like ${wikiUrl} is not a MediaWiki site.`);
+      throw new Error(`${wikiUrl} does not seem to be a MediaWiki site.`);
     }
 
     const json = await response.json();
