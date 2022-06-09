@@ -1,3 +1,18 @@
+// mediawiki-rc-mastodon-bot: Relay MediaWiki RecentChanges to Mastodon
+// Copyright (C) 2022 Hong Minhee <https://hongminhee.org/>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import { handlers, setup } from "https://deno.land/std@0.140.0/log/mod.ts";
 import {
   Command,
@@ -31,13 +46,18 @@ interface Options {
   changeType?: RecentChangeType;
   limit?: number;
   debug: boolean;
+  license?: boolean;
 }
 
 async function main() {
   await new Command()
     .name(import.meta.url.match(/\/([^/]+)$/)?.[1]!)
     .description(
-      "Relay RecentChanges from a MediaWiki site to a Mastodon account",
+      "Relay RecentChanges from a MediaWiki site to a Mastodon account\n\n" +
+        "mediawiki-rc-mastodon-bot: Copyright (C) 2022 Hong Minhee\n" +
+        "This program comes with ABSOLUTELY NO WARRANTY.  This is free " +
+        "software, and you are welcome to redistribute it under certain " +
+        "conditions.  Use -L/--license option for details.",
     )
     .type("url", urlType)
     .type("changeType", changeType)
@@ -48,6 +68,7 @@ async function main() {
     )
     .option("-l, --limit <limit:number>", "Number of changes to fetch")
     .option("-d, --debug", "Enable debug logging", { default: false })
+    .option("-L, --license", "Show the complete license")
     .allowEmpty(false)
     .action(async (options: Options, wikiUrl) => {
       await setup({
@@ -61,6 +82,13 @@ async function main() {
           },
         },
       });
+
+      if (options.license) {
+        console.log(
+          await Deno.readTextFile(new URL("./LICENSE", import.meta.url)),
+        );
+        Deno.exit(0);
+      }
 
       let siteInfo: SiteInfo;
       try {
