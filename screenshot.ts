@@ -13,10 +13,8 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-import puppeteer, {
-  ConnectOptions,
-} from "https://deno.land/x/puppeteer@9.0.2/mod.ts";
-import * as log from "https://deno.land/std@0.140.0/log/mod.ts";
+import puppeteer, { ConnectOptions } from "puppeteer";
+import * as log from "std/log";
 
 export type { ConnectOptions };
 

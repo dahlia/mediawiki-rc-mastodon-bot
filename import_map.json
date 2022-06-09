@@ -1,0 +1,9 @@
+{
+  "imports": {
+    "std/log": "https://deno.land/std@0.142.0/log/mod.ts",
+    "aitertools": "https://deno.land/x/aitertools@0.3.1/mod.ts",
+    "sleep": "https://deno.land/x/sleep@v1.2.1/mod.ts",
+    "puppeteer": "https://deno.land/x/puppeteer@9.0.2/mod.ts",
+    "cliffy/command": "https://deno.land/x/cliffy@v0.24.2/command/mod.ts"
+  }
+}

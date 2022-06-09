@@ -1,3 +1,4 @@
 {
-  "checkJs": true
+  "checkJs": true,
+  "importMap": "import_map.json"
 }

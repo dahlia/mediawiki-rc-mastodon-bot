@@ -13,14 +13,9 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-import * as log from "https://deno.land/std@0.140.0/log/mod.ts";
-import {
-  Command,
-  EnumType,
-  ITypeInfo,
-  ValidationError,
-} from "https://deno.land/x/cliffy@v0.24.2/command/mod.ts";
-import { take } from "https://deno.land/x/aitertools@0.3.1/mod.ts";
+import * as log from "std/log";
+import { take } from "aitertools";
+import { Command, EnumType, ITypeInfo, ValidationError } from "cliffy/command";
 import {
   getArticleUrl,
   getRecentChanges,

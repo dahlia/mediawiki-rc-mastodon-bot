@@ -13,8 +13,8 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-import * as log from "https://deno.land/std@0.140.0/log/mod.ts";
-import { sleep } from "https://deno.land/x/sleep@v1.2.1/mod.ts";
+import * as log from "std/log";
+import { sleep } from "sleep";
 
 function getLogger(): log.Logger {
   return log.getLogger("mediawiki");
