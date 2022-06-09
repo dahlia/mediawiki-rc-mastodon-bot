@@ -20,7 +20,7 @@ function getLogger(): log.Logger {
   return log.getLogger("mediawiki");
 }
 
-interface SiteInfo {
+export interface SiteInfo {
   readonly mainpage: string;
   readonly base: string;
   readonly sitename: string;
@@ -99,8 +99,10 @@ export const RECENT_CHANGE_TYPES = [
 export type ElementTypeOfArray<T extends readonly unknown[]> = T extends
   readonly (infer U)[] ? U : never;
 
+export type RecentChangeType = ElementTypeOfArray<typeof RECENT_CHANGE_TYPES>;
+
 export interface RCBase {
-  type: ElementTypeOfArray<typeof RECENT_CHANGE_TYPES>;
+  type: RecentChangeType;
   rcid: number;
   ns: number;
   title: string;

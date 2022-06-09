@@ -20,6 +20,7 @@ import {
   ITypeInfo,
   ValidationError,
 } from "https://deno.land/x/cliffy@v0.24.2/command/mod.ts";
+import { take } from "https://deno.land/x/aitertools@0.3.1/mod.ts";
 import {
   getArticleUrl,
   getRecentChanges,
@@ -27,7 +28,9 @@ import {
   getSiteInfo,
   RECENT_CHANGE_TYPES,
   RecentChangeType,
+  SiteInfo,
 } from "./mediawiki.ts";
+import { capture } from "./screenshot.ts";
 
 function urlType({ label, name, value }: ITypeInfo): URL {
   try {
@@ -45,6 +48,7 @@ const changeType = new EnumType(RECENT_CHANGE_TYPES);
 interface Options {
   changeType?: RecentChangeType;
   limit?: number;
+  browserWsEndpoint?: URL;
   debug?: boolean;
   license?: boolean;
 }
@@ -67,6 +71,11 @@ async function main() {
       "Filter by change type",
     )
     .option("-l, --limit <limit:number>", "Number of changes to fetch")
+    .option(
+      "--browser-ws-endpoint <ws_url:url>",
+      "Connect to a remote web browser via WebSocket to capture screenshots " +
+        "instead of luanching a local web browser",
+    )
     .option("-d, --debug", "Enable debug logging")
     .option("-L, --license", "Show the complete license")
     .allowEmpty(false)
@@ -107,18 +116,32 @@ async function main() {
         namespace: 0,
       };
 
-      let count = 0;
-      for await (const rc of getRecentChanges(wikiUrl, rcOptions)) {
-        count++;
+      let changes = getRecentChanges(wikiUrl, rcOptions);
+      if (options.limit != null) changes = take(changes, options.limit);
+      const changesWithImages = capture(
+        changes,
+        (rc) =>
+          rc.type == "log"
+            ? getArticleUrl(siteInfo, rc.title)
+            : getRevisionUrl(siteInfo, rc.revid),
+        options.browserWsEndpoint == null
+          ? undefined
+          : { browserWSEndpoint: options.browserWsEndpoint.href },
+      );
+      for await (const [rc, imageBuffer] of changesWithImages) {
         const articleUrl = getArticleUrl(siteInfo, rc.title);
         const url = rc.type == "log"
           ? articleUrl
           : getRevisionUrl(siteInfo, rc.revid);
-
-        if (options.limit != null && count >= options.limit) {
-          break;
-        }
         log.info(`[[${rc.title}]] ${url.href}`);
+        log.debug(() => {
+          const tmpImg = Deno.makeTempFileSync({
+            prefix: `${rc.title}--`,
+            suffix: ".png",
+          });
+          Deno.writeFileSync(tmpImg, imageBuffer);
+          return `Screenshot: ${tmpImg}`;
+        });
       }
     })
     .parse(Deno.args);
