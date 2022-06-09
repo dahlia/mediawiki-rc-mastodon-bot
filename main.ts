@@ -13,7 +13,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-import { handlers, setup } from "https://deno.land/std@0.140.0/log/mod.ts";
+import * as log from "https://deno.land/std@0.140.0/log/mod.ts";
 import {
   Command,
   EnumType,
@@ -45,7 +45,7 @@ const changeType = new EnumType(RECENT_CHANGE_TYPES);
 interface Options {
   changeType?: RecentChangeType;
   limit?: number;
-  debug: boolean;
+  debug?: boolean;
   license?: boolean;
 }
 
@@ -67,21 +67,25 @@ async function main() {
       "Filter by change type",
     )
     .option("-l, --limit <limit:number>", "Number of changes to fetch")
-    .option("-d, --debug", "Enable debug logging", { default: false })
+    .option("-d, --debug", "Enable debug logging")
     .option("-L, --license", "Show the complete license")
     .allowEmpty(false)
     .action(async (options: Options, wikiUrl) => {
-      await setup({
+      const loggerConfig: log.LoggerConfig = {
+        level: options.debug ? "DEBUG" : "INFO",
+        handlers: ["console"],
+      };
+      await log.setup({
         handlers: {
-          console: new handlers.ConsoleHandler("DEBUG"),
+          console: new log.handlers.ConsoleHandler("DEBUG"),
         },
         loggers: {
-          mediawiki: {
-            level: options.debug ? "DEBUG" : "INFO",
-            handlers: ["console"],
-          },
+          default: loggerConfig,
+          mediawiki: loggerConfig,
+          screenshot: loggerConfig,
         },
       });
+      log.debug(`CLI options: ${JSON.stringify(options)}`);
 
       if (options.license) {
         console.log(
@@ -110,11 +114,11 @@ async function main() {
         const url = rc.type == "log"
           ? articleUrl
           : getRevisionUrl(siteInfo, rc.revid);
-        console.log(rc.title, url.href);
 
         if (options.limit != null && count >= options.limit) {
           break;
         }
+        log.info(`[[${rc.title}]] ${url.href}`);
       }
     })
     .parse(Deno.args);

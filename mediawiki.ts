@@ -16,7 +16,7 @@
 import * as log from "https://deno.land/std@0.140.0/log/mod.ts";
 import { sleep } from "https://deno.land/x/sleep@v1.2.1/mod.ts";
 
-function getLogger() {
+function getLogger(): log.Logger {
   return log.getLogger("mediawiki");
 }
 
