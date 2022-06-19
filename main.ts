@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import * as log from "std/log";
-import { filter, take } from "aitertools";
+import { filter, take, toArray } from "aitertools";
 import { Command, EnumType, ITypeInfo, ValidationError } from "cliffy/command";
 import license from "license";
 import {
@@ -95,6 +95,7 @@ async function main() {
       { collect: true, default: RECENT_CHANGE_TYPES },
     )
     .option("-l, --limit <int:integer>", "Number of changes to fetch")
+    .option("-C, --continue", "Fetch changes made after the last run")
     .option(
       "-c, --changes-per-toot <int:integer>",
       "Number of changes per toot",
@@ -155,17 +156,30 @@ async function main() {
         accessToken: (options.mastodonAccessTokenFile == null
           ? options.mastodonAccessToken
           : await Deno.readTextFile(options.mastodonAccessTokenFile)).trim(),
-        timeout: 15 * 1000,
+        timeout: 30 * 1000,
       });
 
       const messageTemplate = options.messageTemplateFile == null
         ? options.messageTemplate
         : await Deno.readTextFile(options.messageTemplateFile);
 
+      const storageKey = `lastRun ${siteInfo.base} ${mastodonUrl.href}`;
+      let after: Date | undefined = undefined;
+      if (options.continue) {
+        const lastRun = localStorage.getItem(storageKey);
+        log.debug(`Loaded last run: ${lastRun}`);
+        if (lastRun != null) {
+          after = new Date(lastRun);
+          after = new Date(after.getTime() + 1000);
+        }
+      }
+
       const rcOptions: RecentChangesOptions = {
         window: 10,
         namespace: 0,
+        after,
       };
+      log.debug(`RecentChanges options: ${JSON.stringify(rcOptions)}`);
 
       let changes = filter(
         (c: RecentChange) => options.changeType.includes(c.type),
@@ -173,7 +187,7 @@ async function main() {
       );
       if (options.limit != null) changes = take(changes, options.limit);
       const changesWithImages = capture(
-        changes,
+        (await toArray(changes)).reverse(),
         (rc) =>
           rc.type == "log"
             ? getArticleUrl(siteInfo, rc.title)
@@ -184,7 +198,12 @@ async function main() {
       );
       let changeSet: [] | ChangeSetWithImages = [];
       const seen = new Set<string>();
+      let lastRun: Date | undefined = after;
       for await (const [rc, imageBuffer] of changesWithImages) {
+        if (lastRun == null || new Date(rc.timestamp) > lastRun) {
+          lastRun = new Date(rc.timestamp);
+          log.debug(`Last run: ${lastRun.toISOString()}`);
+        }
         if (seen.has(rc.title)) continue;
         seen.add(rc.title);
         log.info(`[[${rc.title}]] ${getUrl(siteInfo, rc)}`);
@@ -214,6 +233,10 @@ async function main() {
           changes: changeSet,
           messageTemplate,
         });
+      }
+      if (lastRun != null) {
+        localStorage.setItem(storageKey, lastRun.toISOString());
+        log.debug(`Saved last run: ${lastRun.toISOString()}`);
       }
     })
     .parse(Deno.args);

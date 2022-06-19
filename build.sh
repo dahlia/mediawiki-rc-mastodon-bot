@@ -30,6 +30,8 @@ for target in "${!targets[@]}"; do
     --allow-net \
     --allow-read \
     --allow-write \
+    --allow-env \
+    --allow-run \
     --unstable \
     --config="$root_dir/deno.jsonc" \
     --check \

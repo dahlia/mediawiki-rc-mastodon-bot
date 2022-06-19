@@ -113,6 +113,7 @@ export interface RCBase {
   title: string;
   pageid: number;
   redirect?: "";
+  timestamp: string;
 }
 
 export interface RcLog extends RCBase {
@@ -166,7 +167,7 @@ export async function* getRecentChanges(
     format: "json",
     action: "query",
     list: "recentchanges",
-    rcprop: "ids|title|sizes|redirect",
+    rcprop: "ids|title|sizes|redirect|timestamp",
   };
 
   if (options.before != null) params.rcstart = options.before.toISOString();
