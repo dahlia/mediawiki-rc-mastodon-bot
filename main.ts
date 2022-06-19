@@ -16,6 +16,7 @@
 import * as log from "std/log";
 import { filter, take } from "aitertools";
 import { Command, EnumType, ITypeInfo, ValidationError } from "cliffy/command";
+import license from "license";
 import {
   getArticleUrl,
   getRecentChanges,
@@ -115,7 +116,7 @@ async function main() {
         "instead of luanching a local web browser",
     )
     .option("-d, --debug", "Enable debug logging")
-    .option("-L, --license", "Show the complete license")
+    .option("-L, --license", "Show the complete license", { standalone: true })
     .allowEmpty(false)
     .action(async (options, wikiUrl, mastodonUrl) => {
       const loggerConfig: log.LoggerConfig = {
@@ -137,9 +138,7 @@ async function main() {
       log.debug(`CLI args: ${JSON.stringify([wikiUrl, mastodonUrl])}`);
 
       if (options.license) {
-        console.log(
-          await Deno.readTextFile(new URL("./LICENSE", import.meta.url)),
-        );
+        console.log(license);
         Deno.exit(0);
       }
 

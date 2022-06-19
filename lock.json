@@ -150,6 +150,7 @@
   "https://deno.land/x/cliffy@v0.24.2/table/row.ts": "707c8f9c71f28e7ded22a053c13c0988a9598eec0a9e2a7aea7d15cad64d3cfe",
   "https://deno.land/x/cliffy@v0.24.2/table/table.ts": "3905c40d030626faab87a3e2e24982382c0d4c11eccae829a9e04db94d29e3e9",
   "https://deno.land/x/cliffy@v0.24.2/table/utils.ts": "187bb7dcbcfb16199a5d906113f584740901dfca1007400cba0df7dcd341bc29",
+  "https://deno.land/x/foss_license_texts_esm@0.2.1/licenses/AGPL-3.0-or-later.mjs": "7127a19f88b2af29e525f341cc8100b061c6784cfc89da3ec31af686f8ba89d9",
   "https://deno.land/x/mustache@v0.3.0/mustache.mjs": "e4d66e7fd4423ecc65b0ed2648adab3922d8dfdd264d242ce89c67cf9d104041",
   "https://deno.land/x/puppeteer@9.0.2/mod.ts": "71db86d044b2f88d600dccc7db26a9b60ee5c677df4181c2b78c379dde6aa721",
   "https://deno.land/x/puppeteer@9.0.2/src/deno/BrowserFetcher.ts": "2db5f8dcf35f2cfe274a7a3e6896cfb801b94f9677458b929c61aa914d42e896",
