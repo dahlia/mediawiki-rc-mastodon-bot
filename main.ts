@@ -14,18 +14,21 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import * as log from "std/log";
-import { take } from "aitertools";
+import { filter, take } from "aitertools";
 import { Command, EnumType, ITypeInfo, ValidationError } from "cliffy/command";
 import {
   getArticleUrl,
   getRecentChanges,
   getRevisionUrl,
   getSiteInfo,
+  getUrl,
   RECENT_CHANGE_TYPES,
-  RecentChangeType,
+  RecentChange,
+  RecentChangesOptions,
   SiteInfo,
 } from "./mediawiki.ts";
 import { capture } from "./screenshot.ts";
+import { ChangeSetWithImages, login, tootChanges } from "./mastodon.ts";
 
 function urlType({ label, name, value }: ITypeInfo): URL {
   try {
@@ -40,14 +43,6 @@ function urlType({ label, name, value }: ITypeInfo): URL {
 
 const changeType = new EnumType(RECENT_CHANGE_TYPES);
 
-interface Options {
-  changeType?: RecentChangeType;
-  limit?: number;
-  browserWsEndpoint?: URL;
-  debug?: boolean;
-  license?: boolean;
-}
-
 async function main() {
   await new Command()
     .name(import.meta.url.match(/\/([^/]+)$/)?.[1]!)
@@ -60,12 +55,60 @@ async function main() {
     )
     .type("url", urlType)
     .type("changeType", changeType)
-    .arguments("<wiki_url:url>")
+    .arguments("<wiki_url:url> <mastodon_url:url>")
+    .option(
+      "-a, --mastodon-access-token <token>",
+      "Mastodon app access token",
+      {
+        required: true,
+        conflicts: ["mastodon-access-token-file"],
+      },
+    )
+    .option(
+      "-A, --mastodon-access-token-file <file:file>",
+      "Mastodon app access token file.  Beginning and trailing whitespaces " +
+        "are trimmed.",
+      {
+        required: true,
+        conflicts: ["mastodon-access-token"],
+      },
+    )
+    .option(
+      "-m, --message-template <template>",
+      "Toot message template in Mustache syntax",
+      {
+        default: `{{#changes}}
+\u2022 {{title}} ({{deltaString}}) {{url}}
+{{/changes}}`,
+        conflicts: ["message-template-file"],
+      },
+    )
+    .option(
+      "-M, --message-template-file <file:file>",
+      "Toot message template file",
+      { conflicts: ["message-template"] },
+    )
     .option(
       "-t, --change-type <change_type:changeType>",
-      "Filter by change type",
+      "Filter by change type.  Can be applied multiple times",
+      { collect: true, default: RECENT_CHANGE_TYPES },
     )
-    .option("-l, --limit <limit:number>", "Number of changes to fetch")
+    .option("-l, --limit <int:integer>", "Number of changes to fetch")
+    .option(
+      "-c, --changes-per-toot <int:integer>",
+      "Number of changes per toot",
+      {
+        value(val: number) {
+          if (val < 1 || val > 4) {
+            throw new ValidationError(
+              `-c/--changes-per-toot must be between 1 and 4, but got ${val}`,
+            );
+          }
+          return val;
+        },
+        default: 4,
+      },
+    )
     .option(
       "--browser-ws-endpoint <ws_url:url>",
       "Connect to a remote web browser via WebSocket to capture screenshots " +
@@ -74,7 +117,7 @@ async function main() {
     .option("-d, --debug", "Enable debug logging")
     .option("-L, --license", "Show the complete license")
     .allowEmpty(false)
-    .action(async (options: Options, wikiUrl) => {
+    .action(async (options, wikiUrl, mastodonUrl) => {
       const loggerConfig: log.LoggerConfig = {
         level: options.debug ? "DEBUG" : "INFO",
         handlers: ["console"],
@@ -85,11 +128,13 @@ async function main() {
         },
         loggers: {
           default: loggerConfig,
+          mastodon: loggerConfig,
           mediawiki: loggerConfig,
           screenshot: loggerConfig,
         },
       });
       log.debug(`CLI options: ${JSON.stringify(options)}`);
+      log.debug(`CLI args: ${JSON.stringify([wikiUrl, mastodonUrl])}`);
 
       if (options.license) {
         console.log(
@@ -106,12 +151,27 @@ async function main() {
         Deno.exit(1);
       }
 
-      const rcOptions = {
+      const masto = await login({
+        url: mastodonUrl.href,
+        accessToken: (options.mastodonAccessTokenFile == null
+          ? options.mastodonAccessToken
+          : await Deno.readTextFile(options.mastodonAccessTokenFile)).trim(),
+        timeout: 15 * 1000,
+      });
+
+      const messageTemplate = options.messageTemplateFile == null
+        ? options.messageTemplate
+        : await Deno.readTextFile(options.messageTemplateFile);
+
+      const rcOptions: RecentChangesOptions = {
         window: 10,
         namespace: 0,
       };
 
-      let changes = getRecentChanges(wikiUrl, rcOptions);
+      let changes = filter(
+        (c: RecentChange) => options.changeType.includes(c.type),
+        getRecentChanges(wikiUrl, rcOptions),
+      );
       if (options.limit != null) changes = take(changes, options.limit);
       const changesWithImages = capture(
         changes,
@@ -123,12 +183,12 @@ async function main() {
           ? undefined
           : { browserWSEndpoint: options.browserWsEndpoint.href },
       );
+      let changeSet: [] | ChangeSetWithImages = [];
+      const seen = new Set<string>();
       for await (const [rc, imageBuffer] of changesWithImages) {
-        const articleUrl = getArticleUrl(siteInfo, rc.title);
-        const url = rc.type == "log"
-          ? articleUrl
-          : getRevisionUrl(siteInfo, rc.revid);
-        log.info(`[[${rc.title}]] ${url.href}`);
+        if (seen.has(rc.title)) continue;
+        seen.add(rc.title);
+        log.info(`[[${rc.title}]] ${getUrl(siteInfo, rc)}`);
         log.debug(() => {
           const tmpImg = Deno.makeTempFileSync({
             prefix: `${rc.title}--`,
@@ -136,6 +196,24 @@ async function main() {
           });
           Deno.writeFileSync(tmpImg, imageBuffer);
           return `Screenshot: ${tmpImg}`;
+        });
+        changeSet = [...changeSet, [rc, imageBuffer]];
+        if (changeSet.length == options.changesPerToot) {
+          tootChanges({
+            client: masto,
+            site: siteInfo,
+            changes: changeSet,
+            messageTemplate,
+          });
+          changeSet = [];
+        }
+      }
+      if (changeSet.length != 0) {
+        tootChanges({
+          client: masto,
+          site: siteInfo,
+          changes: changeSet,
+          messageTemplate,
         });
       }
     })

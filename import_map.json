@@ -1,9 +1,12 @@
 {
   "imports": {
     "std/log": "https://deno.land/std@0.142.0/log/mod.ts",
-    "aitertools": "https://deno.land/x/aitertools@0.3.1/mod.ts",
+    "std/fmt/bytes": "https://deno.land/std@0.142.0/fmt/bytes.ts",
+    "aitertools": "https://x.nest.land/aitertools@0.4.0-dev.17+c2d4dc3/mod.ts",
     "sleep": "https://deno.land/x/sleep@v1.2.1/mod.ts",
     "puppeteer": "https://deno.land/x/puppeteer@9.0.2/mod.ts",
+    "masto": "https://cdn.skypack.dev/masto@4.3.4?dts",
+    "mustache": "https://deno.land/x/mustache@v0.3.0/mustache.mjs",
     "cliffy/command": "https://deno.land/x/cliffy@v0.24.2/command/mod.ts"
   }
 }

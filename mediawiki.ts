@@ -79,6 +79,11 @@ export function getRevisionUrl(siteInfo: SiteInfo, revid: number): URL {
   return new URL(`${siteInfo.script}?oldid=${revid}`, siteInfo.base);
 }
 
+export function getUrl(siteInfo: SiteInfo, rc: RecentChange): URL {
+  const articleUrl = getArticleUrl(siteInfo, rc.title);
+  return rc.type == "log" ? articleUrl : getRevisionUrl(siteInfo, rc.revid);
+}
+
 export interface RecentChangesOptions {
   readonly window?: number;
   readonly namespace?: number;
