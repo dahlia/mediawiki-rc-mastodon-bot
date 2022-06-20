@@ -12,7 +12,7 @@ deno run \
   --allow-env \
   --allow-run \
   --unstable \
-  --config="$(dirname "$0")/deno.jsonc)" \
+  --config="$(dirname "$0")/deno.jsonc" \
   --check \
   --lock="$(dirname "$0")/lock.json" \
   main.ts \
