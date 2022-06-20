@@ -42,6 +42,17 @@ function urlType({ label, name, value }: ITypeInfo): URL {
   }
 }
 
+function dateType({ label, name, value }: ITypeInfo): Date {
+  const date = new Date(value);
+  if (isNaN(date.getTime())) {
+    throw new ValidationError(
+      `${label} "${name}" must be a valid date, ` +
+        `but got "${value}"`,
+    );
+  }
+  return date;
+}
+
 const changeType = new EnumType(RECENT_CHANGE_TYPES);
 
 async function main() {
@@ -55,6 +66,7 @@ async function main() {
         "conditions.  Use -L/--license option for details.",
     )
     .type("url", urlType)
+    .type("date", dateType)
     .type("changeType", changeType)
     .arguments("<wiki_url:url> <mastodon_url:url>")
     .option(
@@ -95,7 +107,17 @@ async function main() {
       { collect: true, default: RECENT_CHANGE_TYPES },
     )
     .option("-l, --limit <int:integer>", "Number of changes to fetch")
-    .option("-C, --continue", "Fetch changes made after the last run")
+    .option(
+      "-C, --continue",
+      "Fetch changes made after the last run",
+      { conflicts: ["after"] },
+    )
+    .option(
+      "--after <timestamp:date>",
+      "Fetch changes made after the given timestamp" +
+        " (simplified ISO 8601 format; YYYY-MM-DDTHH:mm:ss.sssZ)",
+      { conflicts: ["continue"] },
+    )
     .option(
       "-c, --changes-per-toot <int:integer>",
       "Number of changes per toot",
@@ -164,15 +186,15 @@ async function main() {
         : await Deno.readTextFile(options.messageTemplateFile);
 
       const storageKey = `lastRun ${siteInfo.base} ${mastodonUrl.href}`;
-      let after: Date | undefined = undefined;
+      let after: Date | undefined = options.after;
       if (options.continue) {
         const lastRun = localStorage.getItem(storageKey);
         log.debug(`Loaded last run: ${lastRun}`);
         if (lastRun != null) {
           after = new Date(lastRun);
-          after = new Date(after.getTime() + 1000);
         }
       }
+      after = after && new Date(after.getTime() + 1000);
 
       const rcOptions: RecentChangesOptions = {
         window: 10,
