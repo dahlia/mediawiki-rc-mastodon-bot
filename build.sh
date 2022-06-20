@@ -12,7 +12,7 @@ declare -A targets=(
 root_dir="$(dirname "$0")"
 dist_dir=dist
 
-if [ -z "${1:-}" ]; then
+if [[ -z "${1:-}" ]]; then
   echo error: too few arguments
   echo usage: "$(basename "$0")" VERSION
   exit 1

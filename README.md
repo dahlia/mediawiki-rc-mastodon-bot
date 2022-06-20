@@ -13,20 +13,18 @@ screenshots.  The following toot is an example:
 Prerequisites
 -------------
 
- 1.  Install [Deno] 1.23.0 or above.
-
- 2.  You need a MediaWiki site.  It doesn't have to be owned by you, but you
+ 1.  You need a MediaWiki site.  It doesn't have to be owned by you, but you
      should be allowed to redistribute their page titles, permalinks, and their
      screenshots to public social media.
  
      *Base URL* will be used.  Note that MediaWiki base URLs usually do not
      include paths like `wiki/` and `w/`.
 
- 3.  Create a Mastodon account.  I recommend [botsin.space], a Mastodon server
+ 2.  Create a Mastodon account.  I recommend [botsin.space], a Mastodon server
      specialized for bots, but you can use any other Mastodon server too, except
      automatical tooting is allowed according to the rules of your server.
 
- 4.  Create a Mastodon application from *Preferences* → *Development* →
+ 3.  Create a Mastodon application from *Preferences* → *Development* →
      *New Application*.  It requires 3 access scopes:
 
       -  `read:statuses`
@@ -37,16 +35,24 @@ Prerequisites
 
      *Your access key* will be used.
 
- 5.  Optionally, you may need a [Browserless] account, if you can't or don't
+ 4.  Optionally, you may need a [Browserless] account, if you can't or don't
      want to run a headless web browser on your own node (e.g., [Deno Deploy]).
      Don't worry! Browserless offers some prepaid balance for free.
 
      *API Key* will be used.
 
-[Deno]: https://deno.land/
 [botsin.space]: https://botsin.space/
 [Browserless]: https://www.browserless.io/
 [Deno Deploy]: https://deno.com/deploy
+
+
+Download
+--------
+
+Official executable binaries for Linux, macOS, and Windows are available in
+the [releases] page.
+
+[releases]: https://github.com/dahlia/mediawiki-rc-mastodon-bot/releases
 
 
 Usage
@@ -55,11 +61,10 @@ Usage
 Here's a command to run with minimum options:
 
 ~~~~ bash
-./run.sh \
+mediawiki-rc-mastodon-bot \
   https://your-mediawiki-site.wiki/ \
   https://your-mastodon-server.social/ \
   --mastodon-access-token=YOUR_MASTODON_ACCESS_KEY \
-  --continue \
   --limit=16
 ~~~~
 
@@ -67,7 +72,7 @@ If you want to use Browserless instead of your local web browser for capturing
 screenshots, use `--browser-ws-endpoint` option:
 
 ~~~~ bash
-./run.sh \
+mediawiki-rc-mastodon-bot \
   https://your-mediawiki-site.wiki/ \
   https://your-mastodon-server.social/ \
   -a YOUR_MASTODON_ACCESS_KEY -C -l 16 \
@@ -75,6 +80,43 @@ screenshots, use `--browser-ws-endpoint` option:
 ~~~~
 
 For further options, use `-h`/`--help` option.
+
+
+Continuous operation
+--------------------
+
+This program does not provide daemon mode or long-running mode, but checks
+recent changes only once for a invoke.  For continous operation, automate
+periodical execution using `cron` or some shell scripting, e.g.:
+
+~~~~ bash
+while true; do
+  mediawiki-rc-mastodon-bot \
+    https://your-mediawiki-site.wiki/ \
+    https://your-mastodon-server.social/ \
+    --mastodon-access-token=YOUR_MASTODON_ACCESS_KEY \
+    --continue
+  sleep 1800 # Every 30 minutes
+done
+~~~~
+
+Note that `-C`/`--continue` option is used together.  With this option,
+only RecentChanges after the last fetched change are published to Mastodon.
+
+
+Build
+-----
+
+As this program is written in TypeScript & Deno, you need [Deno] first.
+
+You could run your own modified version from the local source tree using
+*run.sh* script.  It's basically a drop-in-replacement of official executable
+binaries.
+
+To build executable binaries, use *build.sh* script.  Output files will be
+placed under *dist/* directory.  The directory will be created if not exists.
+
+[Deno]: https://deno.land/
 
 
 License

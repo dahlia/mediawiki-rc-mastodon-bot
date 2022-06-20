@@ -2,7 +2,7 @@
 set -eou pipefail
 
 deno lint
-deno fmt --check
+deno fmt --check --ignore=.github/,.vscode/
 if command -v shellcheck > /dev/null; then
   shellcheck ./*.sh hooks/*
 fi

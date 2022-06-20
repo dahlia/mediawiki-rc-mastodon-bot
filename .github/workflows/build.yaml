@@ -1,0 +1,47 @@
+# deno-fmt-ignore-file
+name: build
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v2
+    - uses: denoland/setup-deno@v1
+      with:
+        deno-version: v1.x
+    - run: hooks/pre-commit
+
+  release:
+    if: github.event_name == 'push'
+    needs: [lint]
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v2
+    - uses: denoland/setup-deno@v1
+      with:
+        deno-version: v1.x
+    - if: github.ref_type == 'tag'
+      uses: dahlia/submark/setup@0.3.1
+    - run: ./build.sh "$GITHUB_REF_NAME"
+    - uses: actions/upload-artifact@v3
+      with:
+        name: dist
+        path: dist/
+    - if: github.ref_type == 'tag'
+      run: |
+        submark \
+          --h2 "version $GITHUB_REF_NAME" \
+          --ignore-case \
+          --omit-heading \
+          --out-file "$RUNNER_TEMP/release-note.md" \
+          CHANGES.md
+    - if: github.ref_type == 'tag'
+      uses: softprops/action-gh-release@v1
+      with:
+        name: mediawiki-rc-mastodon-bot ${{ github.ref_name }}
+        body_path: ${{ runner.temp }}/release-note.md
+        files: |
+          dist/*.tar.gz
+          dist/*.zip
+        fail_on_unmatched_files: true
