@@ -1,4 +1,8 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -eou pipefail
+
 deno lint
 deno fmt --check
+if command -v shellcheck > /dev/null; then
+  shellcheck ./*.sh hooks/*
+fi

@@ -5,5 +5,8 @@
   "deno.unstable": false,
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "denoland.vscode-deno",
-  "files.insertFinalNewline": true
+  "files.insertFinalNewline": true,
+  "shellcheck.enable": true,
+  "shellcheck.enableQuickFix": true,
+  "shellcheck.run": "onSave"
 }

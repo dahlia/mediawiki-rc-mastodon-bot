@@ -55,7 +55,7 @@ Usage
 Here's a command to run with minimum options:
 
 ~~~~ bash
-deno run --allow-all --unstable --config=deno.jsonc --lock=lock.json main.ts \
+./run.sh \
   https://your-mediawiki-site.wiki/ \
   https://your-mastodon-server.social/ \
   --mastodon-access-token=YOUR_MASTODON_ACCESS_KEY \
@@ -67,7 +67,7 @@ If you want to use Browserless instead of your local web browser for capturing
 screenshots, use `--browser-ws-endpoint` option:
 
 ~~~~ bash
-deno run --allow-all --unstable --config=deno.jsonc --lock=lock.json main.ts \
+./run.sh \
   https://your-mediawiki-site.wiki/ \
   https://your-mastodon-server.social/ \
   -a YOUR_MASTODON_ACCESS_KEY -C -l 16 \
