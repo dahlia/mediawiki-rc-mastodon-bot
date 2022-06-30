@@ -13,8 +13,8 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
+import { delay } from "std/async";
 import * as log from "std/log";
-import { sleep } from "sleep";
 
 function getLogger(): log.Logger {
   return log.getLogger("mediawiki");
@@ -181,7 +181,7 @@ export async function* getRecentChanges(
 
   do {
     if (params.rccontinue != null) {
-      await sleep(options.intervalSeconds ?? Math.random() * 0.5 + 0.5);
+      await delay((options.intervalSeconds ?? Math.random() * .5 + .5) * 1000);
     }
     logger.debug(params);
     apiUrl.search = new URLSearchParams(params).toString();
