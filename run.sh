@@ -2,7 +2,7 @@
 set -eou pipefail
 
 if command -v git > /dev/null; then
-  git config core.hooksPath hooks
+  git -C "$(dirname "$0")" config core.hooksPath hooks
 fi
 
 deno run \
@@ -15,5 +15,5 @@ deno run \
   --config="$(dirname "$0")/deno.jsonc" \
   --check \
   --lock="$(dirname "$0")/lock.json" \
-  main.ts \
+  "$(dirname "$0")/main.ts" \
   "$@"
