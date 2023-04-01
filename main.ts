@@ -230,12 +230,16 @@ async function main() {
         seen.add(rc.title);
         log.info(`[[${rc.title}]] ${getUrl(siteInfo, rc)}`);
         log.debug(() => {
-          const tmpImg = Deno.makeTempFileSync({
-            prefix: `${rc.title}--`,
-            suffix: ".png",
-          });
-          Deno.writeFileSync(tmpImg, imageBuffer);
-          return `Screenshot: ${tmpImg}`;
+          try {
+            const tmpImg = Deno.makeTempFileSync({
+              prefix: `${rc.title}--`,
+              suffix: ".png",
+            });
+            Deno.writeFileSync(tmpImg, imageBuffer);
+            return `Screenshot: ${tmpImg}`;
+          } catch (e) {
+            return `Failed to write a debug log due to an error: ${e}`;
+          }
         });
         changeSet = [...changeSet, [rc, imageBuffer]];
         if (changeSet.length == options.changesPerToot) {
