@@ -1,5 +1,5 @@
 // mediawiki-rc-mastodon-bot: Relay MediaWiki RecentChanges to Mastodon
-// Copyright (C) 2022 Hong Minhee <https://hongminhee.org/>
+// Copyright (C) 2022–2024 Hong Minhee <https://hongminhee.org/>
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -15,7 +15,12 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import * as log from "std/log";
 import { filter, take, toArray } from "aitertools";
-import { Command, EnumType, ITypeInfo, ValidationError } from "cliffy/command";
+import {
+  Command,
+  EnumType,
+  type ITypeInfo,
+  ValidationError,
+} from "cliffy/command";
 import license from "license";
 import {
   getArticleUrl,
@@ -24,12 +29,13 @@ import {
   getSiteInfo,
   getUrl,
   RECENT_CHANGE_TYPES,
-  RecentChange,
-  RecentChangesOptions,
-  SiteInfo,
+  type RecentChange,
+  type RecentChangesOptions,
+  type SiteInfo,
 } from "./mediawiki.ts";
 import { capture } from "./screenshot.ts";
-import { ChangeSetWithImages, login, tootChanges } from "./mastodon.ts";
+import { type ChangeSetWithImages, tootChanges } from "./mastodon.ts";
+import { login } from "masto";
 
 function urlType({ label, name, value }: ITypeInfo): URL {
   try {

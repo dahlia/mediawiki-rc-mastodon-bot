@@ -12,13 +12,7 @@ declare -A targets=(
 root_dir="$(dirname "$0")"
 dist_dir=dist
 
-if [[ -z "${1:-}" ]]; then
-  echo error: too few arguments
-  echo usage: "$(basename "$0")" VERSION
-  exit 1
-fi >&2
-
-version="$1"
+version="$(deno eval 'import m from "./deno.json" with { type: "json" }; console.log(m.version)')"
 mkdir -p "$dist_dir"
 for target in "${!targets[@]}"; do
   echo "Building for $target..." >&2
@@ -32,10 +26,9 @@ for target in "${!targets[@]}"; do
     --allow-write \
     --allow-env \
     --allow-run \
-    --unstable \
-    --config="$root_dir/deno.jsonc" \
+    --allow-import \
+    --allow-sys \
     --check \
-    --lock="$root_dir/lock.json" \
     --target="$target" \
     --output="$tmpdir/$bin_name" \
     "$root_dir/main.ts"

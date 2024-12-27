@@ -5,15 +5,16 @@ if command -v git > /dev/null; then
   git -C "$(dirname "$0")" config core.hooksPath hooks
 fi
 
+deno install --allow-scripts
+
 deno run \
   --allow-net \
   --allow-read \
   --allow-write \
   --allow-env \
   --allow-run \
-  --unstable \
-  --config="$(dirname "$0")/deno.jsonc" \
+  --allow-import \
+  --allow-sys \
   --check \
-  --lock="$(dirname "$0")/lock.json" \
   "$(dirname "$0")/main.ts" \
   "$@"

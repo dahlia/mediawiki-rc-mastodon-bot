@@ -1,12 +1,16 @@
 {
+  "name": "@hongminhee/mediawiki-rc-mastodon-bot",
+  "version": "0.2.0",
+  "exports": "./main.ts",
+  "nodeModulesDir": "auto",
   "imports": {
     "std/async": "https://deno.land/std@0.163.0/async/mod.ts",
     "std/log": "https://deno.land/std@0.163.0/log/mod.ts",
     "std/fmt/bytes": "https://deno.land/std@0.163.0/fmt/bytes.ts",
-    "aitertools": "https://x.nest.land/aitertools@0.4.0-dev.17+c2d4dc3/mod.ts",
-    "puppeteer": "https://deno.land/x/puppeteer@16.2.0/mod.ts",
+    "aitertools": "jsr:@hongminhee/aitertools@0.6.0",
+    "puppeteer": "npm:puppeteer@23.11.1",
     "license": "https://deno.land/x/foss_license_texts_esm@0.2.1/licenses/AGPL-3.0-or-later.mjs",
-    "masto": "https://cdn.skypack.dev/masto@4.3.4?dts",
+    "masto": "npm:masto@5.11.4",
     "mustache": "https://deno.land/x/mustache@v0.3.0/mustache.mjs",
     "cliffy/command": "https://deno.land/x/cliffy@v0.24.2/command/mod.ts"
   }

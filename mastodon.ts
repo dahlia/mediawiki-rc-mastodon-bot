@@ -1,5 +1,5 @@
 // mediawiki-rc-mastodon-bot: Relay MediaWiki RecentChanges to Mastodon
-// Copyright (C) 2022 Hong Minhee <https://hongminhee.org/>
+// Copyright (C) 2022–2024 Hong Minhee <https://hongminhee.org/>
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -15,34 +15,12 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import * as log from "std/log";
 import { prettyBytes } from "std/fmt/bytes";
-import {
-  Attachment,
-  HttpNativeImpl,
-  InstanceRepository,
-  MastoClient,
-  MastoConfig,
-  SerializerNativeImpl,
-  Status,
-  WsNativeImpl,
-} from "masto";
+import type { mastodon } from "masto";
 import mustache from "mustache";
-import { getUrl, RecentChange, SiteInfo } from "./mediawiki.ts";
+import { getUrl, type RecentChange, type SiteInfo } from "./mediawiki.ts";
 
 function getLogger(): log.Logger {
   return log.getLogger("mastodon");
-}
-
-export async function login(config: MastoConfig): Promise<MastoClient> {
-  const serializer = new SerializerNativeImpl();
-  const http = new HttpNativeImpl(config, serializer);
-  const instance = await new InstanceRepository(http, "1.0.0").fetch();
-  const ws = new WsNativeImpl(
-    instance.urls.streamingApi,
-    instance.version,
-    config,
-    serializer,
-  );
-  return new MastoClient(http, ws, instance.version, config);
 }
 
 export type ChangeWithImage = [RecentChange, Uint8Array];
@@ -54,23 +32,25 @@ export type ChangeSetWithImages =
   | [ChangeWithImage, ChangeWithImage, ChangeWithImage, ChangeWithImage];
 
 export async function tootChanges({ client, site, changes, messageTemplate }: {
-  client: MastoClient;
+  client: mastodon.Client;
   site: SiteInfo;
   changes: ChangeSetWithImages;
   messageTemplate: string;
-}): Promise<Status> {
+}): Promise<mastodon.v1.Status> {
   const logger = getLogger();
   const media = await Promise.all(
     changes.map(async ([rc, img]) => {
-      const attach: Attachment = await client.mediaAttachments.create({
-        file: new File(
-          [img],
-          `${rc.pageid}-${rc.rcid}.png`,
-          { type: "image/png" },
-        ),
-        description: rc.title,
-        focus: "0.0, -1.0",
-      });
+      const attach: mastodon.v1.MediaAttachment = await client.v2
+        .mediaAttachments
+        .create({
+          file: new File(
+            [img],
+            `${rc.pageid}-${rc.rcid}.png`,
+            { type: "image/png" },
+          ),
+          description: rc.title,
+          focus: "0.0, -1.0",
+        });
       logger.debug(`Uploaded an image attachment: ${JSON.stringify(attach)}`);
       return attach;
     }),
@@ -91,7 +71,7 @@ export async function tootChanges({ client, site, changes, messageTemplate }: {
   mustache.escape = (s: string) => s;
   // @ts-ignore: It's untyped.
   const status: string = mustache.render(messageTemplate, tplVars);
-  const toot: Status = await client.statuses.create({
+  const toot: mastodon.v1.Status = await client.v1.statuses.create({
     status,
     visibility: "public",
     mediaIds: [...media.map((m) => m.id)],

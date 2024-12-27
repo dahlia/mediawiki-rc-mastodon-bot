@@ -4,26 +4,31 @@ on: [push, pull_request]
 
 jobs:
   lint:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: denoland/setup-deno@v1
+    - uses: actions/checkout@v4
+    - uses: denoland/setup-deno@v2
       with:
-        deno-version: v1.x
+        deno-version: v2.x
     - run: hooks/pre-commit
 
+  # TODO: matrix
   release:
     if: github.event_name == 'push'
     needs: [lint]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: denoland/setup-deno@v1
+    - uses: actions/checkout@v4
+    - uses: denoland/setup-deno@v2
       with:
-        deno-version: v1.x
+        deno-version: v2.x
     - if: github.ref_type == 'tag'
       uses: dahlia/submark/setup@0.3.1
-    - run: ./build.sh "$GITHUB_REF_NAME"
+    - if: github.ref_type == 'tag'
+      run: '[[ "$(jq -r .version deno.json)" = "$GITHUB_REF_NAME" ]]'
+      shell: bash
+    - run: ./build.sh
+      shell: bash
     - uses: actions/upload-artifact@v3
       with:
         name: dist

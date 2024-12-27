@@ -1,5 +1,5 @@
 // mediawiki-rc-mastodon-bot: Relay MediaWiki RecentChanges to Mastodon
-// Copyright (C) 2022 Hong Minhee <https://hongminhee.org/>
+// Copyright (C) 2022–2024 Hong Minhee <https://hongminhee.org/>
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import * as log from "std/log";
-import puppeteer, { ConnectOptions } from "puppeteer";
+import puppeteer, { type ConnectOptions } from "puppeteer";
 
 export type { ConnectOptions };
 
@@ -30,7 +30,9 @@ export async function* capture<T>(
   const logger = getLogger();
   logger.debug(`Connect options: ${JSON.stringify(connectOptions)}`);
   const browser = connectOptions == null
-    ? await puppeteer.launch()
+    ? await puppeteer.launch({
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    })
     : await puppeteer.connect(connectOptions);
   const page = await browser.newPage();
 
